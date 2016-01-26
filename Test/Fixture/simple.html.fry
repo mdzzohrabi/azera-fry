@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <title>@title</title>
+        <title>@block title { Hello @user.name }</title>
+    </head>
+    <body>
+        <h1>Welcome @user.name</h1>
+        <span>@("Hello"|lower ~ " " ~ "World"|upper)</span>
+        <span>@( [ "A", "B", 'C' ] |join(',')|split('asd') )</span>
+
+        @user.name|split(' ')|join(',')
+
+        @macro say( str = "World" , size = false ) { Hello @str ( @size ) }
+
+        @say("Masoud" , size = 80 )
+        @say("Reza")
+
+        @if "Masoud" equals "Alireza"
+            Why ?!
+        @elseif 3 > 4
+            Why not !
+        @else
+            Show me something else
+        @endif
+
+        @/* My Comment "ASD" */
+
+        @"ASD"
+
+
+        @block content
+            Dear, @user.name
+        @endblock
+
+        @set a = 1
+        @set b = 2
+
+        @for i in a..b { <li>@i</li> }
+
+        @for k,v in user {
+            @loop.index - @k = @v
+                @for part in v|split(' ') {
+                    - @part
+                }
+        }
+
+        @for key, value in ( { name: "Masoud" , last: "Zohrabi" , "Reza" }) { <span>@key</span> = <span>@value</span> }
+
+        @set user = {
+            name : "Mohammad"
+        }
+
+        @set user.name = user.name ~ "Reza"
+
+        @renderBlock("content")
+
+        @renderBlock("content",{ user: {
+            name : "Reza"
+        }})
+
+        @set list {
+            <ul>
+                <li>One</li>
+                <li>Two</li>
+            </ul>
+        }
+
+        @set list = list ~ "End of list"
+
+        @list
+
+
+        @if 3 > 2 {
+            Hello @title
+        }
+    </body>
+</html>

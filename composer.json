@@ -1,0 +1,22 @@
+{
+	"name": "azera/fry",
+	"description": "Azera Fry Template Engine",
+	"authors": [
+		{
+			"name": "Masoud Zohrabi",
+			"email": "mdzzohrabi@gmail.com"
+		}
+	],
+	"require": {
+		"php": ">=5.4",
+		"mdzzohrabi/azera-core": "dev-master"
+	},
+  	"require-dev": {
+	  "phpunit/phpunit": "4.8.*"
+	},
+	"autoload": {
+		"psr-4": {
+			"Azera\\Fry\\": ""
+		}
+	}
+}

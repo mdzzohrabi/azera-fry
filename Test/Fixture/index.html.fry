@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Hello World</title>
+    </head>
+    <body>
+
+        @if 2 > 3
+            Hello World
+        @endif
+
+        {% if 2 > 3 %}
+            Hello World
+        {% endif %}
+
+        @if 2 > 3 {
+            Hello World
+        }
+
+        @set name = "Alireza"
+
+        <div class="name">@( Name.toLower() )</div>
+
+        <div class="name">{{ name | lower }}</div>
+
+        @Message( 'Hello' , { 'type': 'error' } , Color('red') )
+
+    </body>
+</html>
