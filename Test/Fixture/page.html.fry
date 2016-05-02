@@ -1,0 +1,10 @@
+@extends "layout.html.fry"
+
+@block title { @( parent()|trim ) Page 1 }
+
+@block body {
+
+    @parent()
+    Page body text
+
+}

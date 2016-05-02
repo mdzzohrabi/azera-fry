@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>@block title { No Title }</title>
+    </head>
+    <body class="@bodyClassName">
+        <div class="panel">
+        @block panel { @/* Panel */ }
+        </div>
+        <content id="@'aBc'|upper">
+        @block body {
+            @// Body
+        }
+        </content>
+    </body>
+</html>
