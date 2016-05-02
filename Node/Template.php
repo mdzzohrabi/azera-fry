@@ -19,6 +19,7 @@ class Template extends Node
     const NODE_BLOCKS = 'blocks';
     const NODE_FUNCTIONS = 'functions';
     const NODE_MACROS = 'macros';
+    const NODE_PARENT = 'parent';
 
     const ATTR_NAME = 'name';
 
@@ -26,19 +27,28 @@ class Template extends Node
      * Template constructor.
      *
      * @param array|\Azera\Fry\Node[] $name
+     * @param Node                    $parent
      * @param Node                    $body
      * @param Node[]                  $blocks
      * @param Node[]                  $macros
      */
-    public function __construct( $name , Node $body , $blocks , $macros )
+    public function __construct( $name , Node $parent = null , Node $body , array $blocks = [] , array $macros = [] )
     {
         parent::__construct([
             self::NODE_BODY         => $body,
             self::NODE_BLOCKS       => $blocks,
-            self::NODE_MACROS       => $macros
+            self::NODE_MACROS       => $macros,
+            self::NODE_PARENT       => $parent
         ], [
             self::ATTR_NAME     => $name ?: md5(rand(1000,9999))
         ], null);
+    }
+
+    /**
+     * @return Block[]
+     */
+    public function getBlocks() {
+        return $this->getNode( self::NODE_BLOCKS );
     }
 
     public function getBody() {
@@ -47,6 +57,8 @@ class Template extends Node
 
     public function compile(Compiler $compiler)
     {
+
+        $compiler->scopeIn( Compiler::SCOPE_ROOT );
 
         $name = $this->getAttribute( self::ATTR_NAME );
 
@@ -59,6 +71,7 @@ class Template extends Node
         ;
 
         $this->renderTemplateName( $compiler );
+        $this->renderParentFunction( $compiler );
         $this->renderBody( $compiler );
         $this->renderBlocks( $compiler );
         $this->renderMacros( $compiler );
@@ -68,6 +81,8 @@ class Template extends Node
             ->line()
             ->write('}')
         ;
+
+        $compiler->scopeOut();
 
     }
 
@@ -88,11 +103,8 @@ class Template extends Node
 
     protected function renderBlocks( Compiler $compiler ) {
 
-        /** @var Node[] $blocks */
-        $blocks = $this->getNode( self::NODE_BLOCKS );
-
-        foreach ( $blocks as $block ) {
-            $compiler->subcompile( $block );
+        foreach ( $this->getBlocks() as $block ) {
+            $block->compile( $compiler );
             $compiler->line();
         }
 
@@ -101,15 +113,58 @@ class Template extends Node
     protected function renderBody( Compiler $compiler ) {
 
         $compiler
+            ->writeln('public function __construct( $env ) {')
+            ->indent()
+            ->writeln('parent::__construct( $env );')
+            ;
+
+        if ( $this->hasParent() )
+            $compiler
+                ->writeln('// Line ' . $this->getNode(self::NODE_PARENT)->getLineNo() )
+                ->writeln('$this->parent = $env->loadTemplate( $this->getParent() );');
+
+
+        $compiler->writeln('$this->blocks = [')->indent();
+
+        foreach ( $this->getBlocks() as $block ) {
+            $compiler
+                ->write('')
+                ->string( $block->getName() )
+                ->raw("\t\t=>\t[ \$this , ")
+                ->string( $block->getMethodName() )
+                ->raw(" ],\n");
+        }
+
+        $compiler->outdent()->writeln('];');
+
+        $compiler
+            ->outdent()
+            ->writeln('}')
+            ->line()
+        ;
+
+        $compiler
             ->writeln('/**')
             ->writeln(' * Render template')
             ->writeln(' * @param array $context')
             ->writeln(' */')
-            ->writeln('public function display( array $context = [] ) {')
+            ->writeln('public function display( array $context = [] , array $blocks = [] ) {')
             ->indent()
         ;
 
-        $this->getBody()->compile( $compiler );
+        if ( $this->hasParent() ) {
+
+            foreach ( $this->getBody()->getNodes() as $node ) {
+                if ( !$node instanceof PrintNode ) {
+                    $node->compile( $compiler );
+                }
+            }
+
+            $compiler
+                ->writeln('$this->parent->display( $context , array_merge( $this->blocks , $blocks ) );');
+        } else {
+            $this->getBody()->compile($compiler);
+        }
 
         $compiler
             ->outdent()
@@ -127,6 +182,28 @@ class Template extends Node
 
         foreach ( $macros as $macro )
             $compiler->subcompile( $macro )->line();
+    }
+
+    private function hasParent() {
+        return $this->hasNode( self::NODE_PARENT );
+    }
+
+    private function renderParentFunction( Compiler $compiler)
+    {
+
+        if ( $this->hasParent() ) {
+
+            $parent = $this->getNode( self::NODE_PARENT );
+
+            $compiler
+                ->writeln('// Line ' . $parent->getLineNo() )
+                ->writeln('protected function getParent() {')->indent()
+                ->write( 'return ' )->subcompile( $parent )->raw(';')->line()
+                ->outdent()->writeln('}')
+                ->line()
+            ;
+        }
+
     }
 
 }

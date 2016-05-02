@@ -17,5 +17,6 @@ class BlockType
     const BLOCK_CLOSURE = 0x03;
     const BLOCK_SECTION = 0x04;
     const BLOCK_COMMENT = 0x05;
+    const BLOCK_COMMENT_SINGLE = 0x06;
 
 }

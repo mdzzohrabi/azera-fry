@@ -8,11 +8,11 @@
 
 namespace Azera\Fry\Parser;
 
+use Azera\Fry\Environment;
 use Azera\Fry\Exception\SyntaxException;
 use Azera\Fry\Node;
 use Azera\Fry\Parser;
 use Azera\Fry\Token;
-use Azera\Fry\TokenStream;
 use Azera\Fry\TokenTypes;
 
 /**
@@ -28,16 +28,27 @@ class SectionParser implements ParserInterface
      * @var ParserInterface[]
      */
     protected $sections;
+    /**
+     * @var Environment
+     */
+    private $environment;
 
-    public function __construct()
+    public function __construct( Environment $environment = null )
     {
         $this->sections = [
             new Parser\Section\IfParser(),
             new Parser\Section\BlockParser(),
             new Parser\Section\LoopParser(),
             new Parser\Section\SetParser(),
-            new Parser\Section\MacroParser()
+            new Parser\Section\MacroParser(),
+            new Parser\Section\ExtendsParser()
         ];
+
+        if ( $environment )
+            $this->sections = array_merge( $this->sections , $environment->getSectionParsers() );
+
+        $this->environment = $environment;
+
     }
 
     /**

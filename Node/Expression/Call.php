@@ -8,10 +8,14 @@
 
 namespace Azera\Fry\Node\Expression;
 
-use Azera\Core\NativeFunction;
+use Azera\Fry\Core\NativeFunction;
 use Azera\Fry\Compiler;
 use Azera\Fry\Node;
 
+/**
+ * Class Call
+ * @package Azera\Fry\Node\Expression
+ */
 class Call extends Node
 {
 
@@ -52,6 +56,18 @@ class Call extends Node
         if ( $env->hasFunction( $functionName ) && ( $func = $env->getFunction( $functionName ) ) instanceof NativeFunction ) {
             $func->compile( $compiler , $args );
             return;
+        }
+
+        if ( $functionName == 'parent' && $compiler->isBlock() ) {
+
+            $compiler
+                ->raw( '$this->parent->renderBlock(' )
+                ->string( $compiler->scopeName() )
+                ->raw(' , $context )')
+            ;
+
+            return;
+
         }
 
         if ( $functionName == 'renderBlock' ) {

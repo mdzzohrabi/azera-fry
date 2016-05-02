@@ -9,6 +9,7 @@
 namespace Azera\Fry\Extension;
 
 
+use Azera\Fry\Extension\Core\SandboxParser;
 use Azera\Fry\AbstractExtension;
 use Azera\Fry\Core\Filter;
 use Azera\Fry\Core\Operator;
@@ -16,6 +17,13 @@ use Azera\Fry\Node\Expression\Range;
 
 class Core extends AbstractExtension
 {
+
+    public function getSectionParsers()
+    {
+        return array(
+            new SandboxParser()
+        );
+    }
 
     public function getFilters()
     {

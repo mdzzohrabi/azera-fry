@@ -34,17 +34,29 @@ class Block extends Node
         ], $lineNo);
     }
 
+    public function getName() {
+        return $this->getAttribute(self::ATTR_NAME);
+    }
+
+    public function getMethodName() {
+        return 'block_' . $this->getAttribute( self::ATTR_NAME );
+    }
+
     public function compile(Compiler $compiler)
     {
 
         $blockName = $this->getAttribute( self::ATTR_NAME );
 
+
         $compiler
-            ->writeln( sprintf('function block_%s( array $context = array() ) {' , $blockName ) )
+            ->writeln( '// Line ' . $this->getLineNo() )
+            ->writeln( sprintf('public function %s( array $context = array() ) {' , $this->getMethodName() ) )
             ->indent()
+            ->scopeIn( Compiler::SCOPE_BLOCK , $blockName )
             ->writeln('ob_start();')
             ->subcompile( $this->getNode( self::NODE_BODY ) )
             ->writeln('return ob_get_clean();')
+            ->scopeOut()
             ->outdent()
             ->writeln('}')
         ;

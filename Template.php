@@ -20,21 +20,39 @@ abstract class Template
     /**
      * @var Environment
      */
-    private $environment;
+    protected $environment;
+
+    /**
+     * @var Template
+     */
+    protected $parent;
+
+    /**
+     * @var array
+     */
+    protected $blocks = [];
 
     public function __construct( Environment $environment )
     {
         $this->environment = $environment;
     }
 
-    public abstract function display( array $context = [] );
+    public abstract function display( array $context = [] , array $blocks = [] );
 
     public abstract function getTemplateName();
+
+    protected function getParent() {
+        return null;
+    }
 
     public function render( array $context = [] ) {
 
         ob_start();
-        $this->display( $context );
+        try {
+            $this->display($context);
+        }catch ( \Exception $e ) {
+            throw $e;
+        }
         return ob_get_clean();
 
     }
@@ -99,6 +117,11 @@ abstract class Template
 
     }
 
+    /**
+     * @param array|object $context
+     * @param array $route
+     * @throws Exception
+     */
     public function getReference( &$context , array $route ) {
         throw new Exception('Not implemented');
     }
@@ -118,7 +141,16 @@ abstract class Template
     }
 
     public function hasBlock( $name ) {
-        return method_exists( $this , 'block_' . $name );
+        return isset( $this->blocks[ $name ] );
+    }
+
+    public function renderBlock( $name , array $context = [] ) {
+
+        if ( !$this->hasBlock( $name ) )
+            throw new LogicException(sprintf('Block `%s` does not exists',$name));
+
+        return call_user_func( $this->blocks[ $name ] , $context );
+
     }
 
     public function hasMacro( $name ) {
@@ -127,14 +159,6 @@ abstract class Template
 
     public function callMacro( $name , $arguments ) {
         return call_user_func_array([ $this , 'macro_' . $name], [ [] , $arguments ] );
-    }
-
-    public function renderBlock( $name , array $context = [] ) {
-
-        if ( !$this->hasBlock( $name ) )
-            throw new LogicException(sprintf('Block `%s` does not exists',$name));
-
-        return $this->{'block_'.$name}( $context );
     }
 
     public function filter( $name , $arguments , $content ) {

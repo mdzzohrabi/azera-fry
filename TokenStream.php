@@ -9,12 +9,11 @@
 namespace Azera\Fry;
 
 use Azera\Fry\Exception\SyntaxException;
-use Azera\Fry\Stream;
 
 /**
  * Class TokenStream
  *
- * @package Azera
+ * @package Azera\Fry
  * @author  Masoud Zohrabi <mdzzohrabi@gmail.com>
  */
 class TokenStream extends Stream
@@ -25,7 +24,7 @@ class TokenStream extends Stream
     /**
      * @var Token[]
      */
-    protected $items  = [];
+    protected $items;
 
     /**
      * TokenStream constructor.
@@ -91,12 +90,15 @@ class TokenStream extends Stream
         if ( !$token->test( $type , $value ) ) {
 
             throw new SyntaxException(
-                '%sUnexpected token "%s" of value "%s" ("%s" expected%s)' ,
+                '%sUnexpected token "%s" of value "%s" ("%s" expected%s) , on "%s" at line %d column %d' ,
                 $message ,
                 TokenTypes::getName( $token->getType() ),
                 $token->getName(),
                 TokenTypes::getName( $type ),
-                $value ? sprintf( ' with value "%s"' , $value ) : ''
+                ( $value ? sprintf( ' with value "%s"' , $value ) : '' ),
+                $this->fileName,
+                $token->getLine(),
+                $token->getColumn()
             );
 
         }

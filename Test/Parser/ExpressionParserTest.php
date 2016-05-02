@@ -12,11 +12,9 @@ use Azera\Fry\Extension\Core;
 use Azera\Fry\Node;
 use Azera\Fry\Node\Expression\Constant;
 use Azera\Fry\Node\Expression\Filter;
-use Azera\Fry\Node\Expression\Operand;
 use Azera\Fry\Parser;
 use Azera\Fry\Test\TestCase;
 use Azera\Fry\Token;
-use Azera\Fry\TokenCollection;
 use Azera\Fry\TokenStream;
 use Azera\Fry\TokenTypes;
 
@@ -35,7 +33,7 @@ class ExpressionParserTest extends TestCase
                 [
                     new Token( null , '"Masoud Zohrabi"' , TokenTypes::T_STR , 0 , 0 )
                 ],
-                new Constant( '"Masoud Zohrabi"' , 0 )
+                new Constant( '"Masoud Zohrabi"' , 0 , Constant::TYPE_STRING )
             ],
             1 => [
                 [
@@ -44,8 +42,8 @@ class ExpressionParserTest extends TestCase
                     new Token( null , '"Zohrabi"' , TokenTypes::T_STR , 0 , 0 )
                 ],
                 new Node\Expression\Binary(
-                    new Constant( '"Masoud"' , 0 ),
-                    new Constant( '"Zohrabi"' , 0 )
+                    new Constant( '"Masoud"' , 0 , Constant::TYPE_STRING ),
+                    new Constant( '"Zohrabi"' , 0 , Constant::TYPE_STRING )
                 , '+' ,0)
             ],
             2 => [
@@ -57,9 +55,9 @@ class ExpressionParserTest extends TestCase
                     new Token( null , 'lower' , TokenTypes::T_NAME , 0 , 0 )
                 ],
                 new Node\Expression\Binary(
-                    new Constant( '"Masoud"' , 0 ),
+                    new Constant( '"Masoud"' , 0 , Constant::TYPE_STRING ),
                     new Filter(
-                        new Constant( '"Zohrabi"' , 0 ),
+                        new Constant( '"Zohrabi"' , 0 , Constant::TYPE_STRING ),
                         'lower' ,
                         new Node\Expression\Arguments(),
                         0
@@ -78,8 +76,8 @@ class ExpressionParserTest extends TestCase
                     new Token( null , 'lower' , TokenTypes::T_NAME , 0 , 0 )
                 ],
                 new Node\Expression\Binary(
-                    new Filter( new Constant( '"Masoud"' , 0 ), 'lower' , new Node\Expression\Arguments() , 0 ),
-                    new Filter( new Constant( '"Zohrabi"' , 0 ), 'lower' , new Node\Expression\Arguments() , 0 ),
+                    new Filter( new Constant( '"Masoud"' , 0 , Constant::TYPE_STRING ), 'lower' , new Node\Expression\Arguments() , 0 ),
+                    new Filter( new Constant( '"Zohrabi"' , 0 , Constant::TYPE_STRING ), 'lower' , new Node\Expression\Arguments() , 0 ),
                     '+' , 0
                 )
             ],
@@ -93,7 +91,7 @@ class ExpressionParserTest extends TestCase
                 new Node\Expression\Call(
                     'render',
                     new Node\Expression\Arguments([
-                        new Constant( '"base.html"' , 0 )
+                        new Constant( '"base.html"' , 0 , Constant::TYPE_STRING )
                     ]),
                     0
                 )

@@ -1,7 +1,6 @@
 <?php
 namespace Azera\Fry;
 
-use Azera\Core\Collection;
 use Azera\Fry\Exception\LexerException;
 use Azera\Fry\Lexer\BlockType;
 use Azera\Fry\Lexer\Breakpoint;
@@ -54,7 +53,8 @@ class Lexer {
         'endblock',
         'macro',
         'for',
-        'set'
+        'set',
+        'extends'
     );
 
     /**
@@ -62,11 +62,12 @@ class Lexer {
      * @var array
      */
     protected $codeBlocksRegex = array(
-        BlockType::BLOCK_COMMENT  => [ '/\\/\\*/A' , '/\\*\\//A' ],
-        BlockType::BLOCK_SECTION  => [ '/-/Ai' , '/\r?\n|$|\{/Am' ],
-        BlockType::BLOCK_BLOCK    => [ '/\{/A' , '/\}/A' ],
-//        BlockType::BLOCK_CLOSURE  => [ '/\(/A' , '/\)/A' ],
-        BlockType::BLOCK_PRINT    => [ '/(?=\"|[a-z]|\()/Ai' , '/(?=.)|$/Ami' ],
+        BlockType::BLOCK_COMMENT         => [ '/\\/\\*/A' , '/\\*\\//A' ],
+        BlockType::BLOCK_COMMENT_SINGLE  => [ '/\\/\\//A' , '/\r?\n|$/m' ],
+        BlockType::BLOCK_SECTION         => [ '/-/Ai' , '/\r?\n|$|\{/Am' ],
+        BlockType::BLOCK_BLOCK           => [ '/\{/A' , '/\}/A' ],
+        BlockType::BLOCK_PRINT           => [ '/(?=\"|\\\'|[a-z]|\()/Ai' , '/(?=.)|$/Ami' ],
+//      BlockType::BLOCK_CLOSURE         => [ '/\(/A' , '/\)/A' ],
     );
 
     /**
@@ -74,9 +75,10 @@ class Lexer {
      * @var array
      */
     protected $codeBlocksTokens = array(
-        BlockType::BLOCK_COMMENT  => [ TokenTypes::T_COMMENT_START , TokenTypes::T_COMMENT_END ],
+        BlockType::BLOCK_COMMENT         => [ TokenTypes::T_COMMENT_START , TokenTypes::T_COMMENT_END ],
+        BlockType::BLOCK_COMMENT_SINGLE  => [ TokenTypes::T_COMMENT_START , TokenTypes::T_COMMENT_END ],
         BlockType::BLOCK_BLOCK    => [ TokenTypes::T_BLOCK_OPEN , TokenTypes::T_BLOCK_CLOSE ],
-//        BlockType::BLOCK_CLOSURE  => [ TokenTypes::T_BLOCK_CLOSURE_OPEN , TokenTypes::T_BLOCK_CLOSURE_CLOSE ],
+//      BlockType::BLOCK_CLOSURE  => [ TokenTypes::T_BLOCK_CLOSURE_OPEN , TokenTypes::T_BLOCK_CLOSURE_CLOSE ],
         BlockType::BLOCK_PRINT    => [ TokenTypes::T_BLOCK_PRINT_OPEN , TokenTypes::T_BLOCK_PRINT_CLOSE ],
         BlockType::BLOCK_SECTION  => [ TokenTypes::T_SECTION_START , TokenTypes::T_SECTION_OPEN ],
     );
@@ -87,6 +89,7 @@ class Lexer {
      */
     protected $blockTokenizer = array(
         BlockType::BLOCK_COMMENT  => 'tokenizeCommentBlock',
+        BlockType::BLOCK_COMMENT_SINGLE  => 'tokenizeCommentSingleBlock',
         BlockType::BLOCK_PRINT    => 'tokenizePrintBlock',
         BlockType::BLOCK_CLOSURE  => 'tokenizeClosureBlock',
         BlockType::BLOCK_BLOCK    => 'tokenizeBlock',
@@ -187,6 +190,17 @@ class Lexer {
 
         # Input reader
 		$this->reader = $reader;
+
+        # Extensions section parsers
+        if ( $environment && is_array( $_sectionParsers = $environment->getSectionParsers() ) ) {
+            foreach ( $_sectionParsers as $sectionParser) {
+                $this->sectionKeywords[] = $sectionParser->getSectionName();
+                $this->sectionKeywords[] = $sectionParser->getSectionEnd();
+            }
+        }
+
+        # Filter empty keywords
+        $this->sectionKeywords = array_filter( $this->sectionKeywords );
 
         # Section types
         $this->regex[ TokenTypes::T_SECTION_TYPE ] = '/' . implode('|',$this->sectionKeywords) . '/iA';
@@ -291,7 +305,8 @@ class Lexer {
      * @throws LexerException
      */
     protected function throwException( $message , ...$params ) {
-        $message .= ', at line %d column %d';
+        $message .= ', on "%s" at line %d column %d';
+        $params[] = $this->reader->getFileName();
         $params[] = $this->reader->getLine();
         $params[] = $this->reader->getColumn();
         throw new LexerException( $message , ...$params );
@@ -506,6 +521,8 @@ class Lexer {
 
         };
 
+        return false;
+
     }
 
     /**
@@ -523,8 +540,6 @@ class Lexer {
      * @throws LexerException
      */
     protected function tokenizeSectionBlock() {
-
-        $stack = [];
 
         // Parse section name ( Section type )
         if ( ( $sectionType = $this->reader->matchAndGo( $this->getRegex( TokenTypes::T_SECTION_TYPE ) ) ) === false )
@@ -567,6 +582,18 @@ class Lexer {
 
     }
 
+    protected function tokenizeCommentSingleBlock() {
+
+        $endPos = $this->findClosePosition( $this->reader->readAll() , '//' , "\n" , $this->reader->getCursor() );
+
+        $length = $endPos - $this->reader->getCursor();
+
+        $comment = $this->reader->readAndGo( $length );
+
+        $this->addToken( $comment , TokenTypes::T_COMMENT );
+
+    }
+
     /**
      * Tokenize print block
      */
@@ -574,58 +601,58 @@ class Lexer {
 
         if ( $openParan = $this->reader->matchAndGo( $this->regex[ TokenTypes::T_OPEN_PARAN ] ) ) {
             $closeParanRegex = $this->regex[ $this->getCloseToken( TokenTypes::T_OPEN_PARAN ) ];
-            $stack = [];
             $this->tokenizeExpression( $closeParanRegex );
             if ( !$this->reader->strippedMatchAndGo( $closeParanRegex ) )
                 $this->throwException( 'Close parenthesis not found' );
         } else {
 
-            while (!$this->reader->isEnd()) {
-                foreach ($this->printBlockTokens as $tokenType => $regex) {
-                    if ($name = $this->reader->matchAndGo($regex)) {
+            foreach ($this->printBlockTokens as $tokenType => $regex) {
+                if ($name = $this->reader->matchAndGo($regex)) {
+
+                    $this->addToken(
+                        $name,
+                        $tokenType
+                    );
+
+                    # Expression ( Call )
+                    if ( $tokenType == TokenTypes::T_NAME && $paranToken = $this->reader->matchAndGo($this->regex[ TokenTypes::T_OPEN_PARAN ])) {
 
                         $this->addToken(
-                            $name,
-                            $tokenType
+                            $paranToken,
+                            TokenTypes::T_OPEN_PARAN
                         );
 
-                        # Expression ( Call )
-                        if ($paranToken = $this->reader->matchAndGo($this->regex[ TokenTypes::T_OPEN_PARAN ])) {
+                        $this->tokenizeExpression(
+                            $this->regex[ TokenTypes::T_CLOSE_PARAN ]
+                        );
 
-                            $this->addToken(
-                                $paranToken,
-                                TokenTypes::T_OPEN_PARAN
-                            );
+                        $this->stripSpaces();
 
-                            $this->tokenizeExpression(
-                                $this->regex[ TokenTypes::T_CLOSE_PARAN ]
-                            );
-
-                            $this->stripSpaces();
-
-                            if (!$paranClose = $this->reader->matchAndGo($this->getRegex(TokenTypes::T_CLOSE_PARAN))) {
-                                $this->throwException('Close parenthesise not found');
-                            }
-
-                            $this->addToken(
-                                $paranClose,
-                                TokenTypes::T_CLOSE_PARAN
-                            );
-
+                        if (!$paranClose = $this->reader->matchAndGo($this->getRegex(TokenTypes::T_CLOSE_PARAN))) {
+                            $this->throwException('Close parenthesise not found');
                         }
 
-                        if ( $filter = $this->reader->match( $this->regex[ TokenTypes::T_FILTER ] ) ) {
+                        $this->addToken(
+                            $paranClose,
+                            TokenTypes::T_CLOSE_PARAN
+                        );
 
-                            $this->tokenizeExpression();
-
-                        }
-
-                        return true;
                     }
+
+                    if ( $filter = $this->reader->match( $this->regex[ TokenTypes::T_FILTER ] ) ) {
+
+                        $this->tokenizeExpression();
+
+                    }
+
+                    return true;
                 }
             }
 
         }
+
+//        while (!$this->reader->isEnd()) {
+//        }
 
         return false;
     }
@@ -759,7 +786,7 @@ class Lexer {
 
             # Throw error if block type not determined
             if ( !$blockType )
-                throw new LexerException( 'Invalid block type at line %d column %d' , $this->reader->getLine() , $this->reader->getColumn() );
+                $this->throwException( 'Invalid block type' );
 
             call_user_func( [ $this , $this->blockTokenizer[ $blockType ] ] );
 

@@ -58,14 +58,20 @@ class FryTest extends TestCase
 
     }
 
-    public function testFry() {
-
-        static $TMP = __DIR__ . '/tmp';
+    private function getFry() {
+        $TMP = __DIR__ . '/tmp';
 
         $fry = new Fry( new FileLoader( __DIR__ . '/Fixture' ) );
         $fry->setTempDir( $TMP );
 
-        /** @var Template $template */
+        return $fry;
+    }
+
+    public function testFry_1() {
+
+        $TMP = __DIR__ . '/tmp';
+        $fry = $this->getFry();
+
         $template = $fry->loadTemplate( 'simple.html.fry' );
 
         $this->assertInstanceOf( Template::class , $template );
@@ -81,5 +87,18 @@ class FryTest extends TestCase
 
     }
 
+    public function testFry_2() {
+
+        $fry = $this->getFry();
+
+        $template = $fry->loadTemplate( 'layout.html.fry' );
+        $title = $template->renderBlock( 'title' );
+        $this->assertEquals( 'No Title' , trim( $title ) );
+
+        $template = $fry->loadTemplate( 'page.html.fry' );
+
+        $this->assertEquals( 'No Title Page 1' , trim( $template->renderBlock( 'title' ) ) );
+
+    }
 
 }

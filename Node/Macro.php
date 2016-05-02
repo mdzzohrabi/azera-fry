@@ -40,10 +40,12 @@ class Macro extends Node
     {
 
         $args = $this->getNode( self::NODE_ARGS )->getNodes();
+        $macroName = $this->getAttribute(self::ATTR_NAME);
 
         $compiler
             ->writeln('// Line ' . $this->getLineNo())
-            ->write('function macro_' . $this->getAttribute(self::ATTR_NAME))
+            ->write('public function macro_' . $macroName )
+            ->scopeIn( Compiler::SCOPE_MACRO , $macroName )
             ->raw('( $context = [] , $arguments = [] ) {')
             ->line()
             ->indent()
@@ -74,6 +76,7 @@ class Macro extends Node
             ->writeln('];')
             ->writeln('$context = array_merge( $context , $this->prepareArgs( $args , $arguments ) );')
             ->subcompile( $this->getNode( self::NODE_BODY ) )
+            ->scopeOut()
             ->outdent()
             ->writeln('}')
         ;

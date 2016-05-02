@@ -205,7 +205,10 @@ class Reader {
 	 * @return integer 		Column number
 	 */
 	public function getColumn() {
-		return strlen( end( explode( "\n" , substr( $this->input , 0 , $this->cursor ) ) ) );
+
+		$lines = explode( "\n" , substr( $this->input , 0 , $this->cursor ) );
+		return strlen( end( $lines ) );
+
 	}
 
 	/**

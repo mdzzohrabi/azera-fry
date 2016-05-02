@@ -6,7 +6,7 @@
     <body>
         <h1>Welcome @user.name</h1>
         <span>@("Hello"|lower ~ " " ~ "World"|upper)</span>
-        <span>@( [ "A", "B", 'C' ] |join(',')|split('asd') )</span>
+        <span>@( [ "A", "B", 'C' ] |join(',') )</span>
 
         @user.name|split(' ')|join(',')
 
@@ -24,6 +24,8 @@
         @endif
 
         @/* My Comment "ASD" */
+
+        @// Signle line comment
 
         @"ASD"
 
@@ -73,5 +75,20 @@
         @if 3 > 2 {
             Hello @title
         }
+
+        @set name = "Alireza"
+
+        <p>@( name|upper )</p>
+
+        @sandbox
+
+            @set name = "Masoud"
+
+            <p>@name</p>
+
+        @endsandbox
+
+        <p>@name</p>
+
     </body>
 </html>

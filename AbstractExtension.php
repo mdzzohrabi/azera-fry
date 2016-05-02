@@ -12,6 +12,7 @@ namespace Azera\Fry;
 use Azera\Fry\Core\Filter;
 use Azera\Fry\Core\Operator;
 use Azera\Fry\Core\SimpleFunction;
+use Azera\Fry\Parser\ParserInterface;
 
 abstract class AbstractExtension
 {
@@ -20,6 +21,13 @@ abstract class AbstractExtension
      * @return SimpleFunction[]
      */
     public function getFunctions() {
+        return array();
+    }
+
+    /**
+     * @return ParserInterface[]
+     */
+    public function getSectionParsers() {
         return array();
     }
 

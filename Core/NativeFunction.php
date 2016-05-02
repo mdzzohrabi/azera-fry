@@ -6,7 +6,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Azera\Core;
+namespace Azera\Fry\Core;
 
 use Azera\Fry\Compiler;
 use Azera\Fry\Node;

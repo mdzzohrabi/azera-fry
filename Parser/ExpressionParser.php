@@ -201,7 +201,7 @@ class ExpressionParser
         $arrayType = $token->is( TokenTypes::T_OPEN_BRACE ) ? 'BRACE' : 'BRACKET';
         $allowKey = ( $arrayType == 'BRACE' );
         $elements = [];
-        $stack = [];
+//        $stack = [];
         $first = true;
 
         $this->stream->expect( $openToken );
@@ -331,22 +331,22 @@ class ExpressionParser
 
     protected function parseNull() {
         $string = $this->stream->expect( TokenTypes::T_NULL );
-        return new Node\Expression\Constant( $string->getValue() , $string->getLine() );
+        return new Node\Expression\Constant( $string->getValue() , $string->getLine() , Node\Expression\Constant::TYPE_KEYWORD );
     }
 
     protected function parseBoolean() {
         $string = $this->stream->expect( TokenTypes::T_BOOLEAN );
-        return new Node\Expression\Constant( $string->getValue() , $string->getLine() );
+        return new Node\Expression\Constant( $string->getValue() , $string->getLine() , Node\Expression\Constant::TYPE_KEYWORD );
     }
 
     protected function parseString() {
         $string = $this->stream->expect( TokenTypes::T_STR );
-        return new Node\Expression\Constant( $string->getValue() , $string->getLine() );
+        return new Node\Expression\Constant( $string->getValue() , $string->getLine() , Node\Expression\Constant::TYPE_STRING );
     }
 
     protected function parseNumber() {
         $num = $this->stream->expect( TokenTypes::T_NUM );
-        return new Node\Expression\Constant( $num->getValue() , $num->getLine() );
+        return new Node\Expression\Constant( $num->getValue() , $num->getLine() , Node\Expression\Constant::TYPE_NUMBER );
     }
 
     protected function parseFilter( $node ) {

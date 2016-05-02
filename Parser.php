@@ -69,7 +69,7 @@ class Parser
         $this->parsers = [
             new Parser\TextParser(),
             new Parser\PrintParser(),
-            new Parser\SectionParser(),
+            new Parser\SectionParser( $environment ),
             new Parser\CommentParser()
         ];
 
@@ -86,9 +86,8 @@ class Parser
     public function parse() {
 
         $body = $this->subparse();
-        $function = $blocks = new Node([],[],0);
 
-        return new Template( $this->stream->getFileName() ,  $body , $this->blocks , $this->macros );
+        return new Template( $this->stream->getFileName() , $this->parent ,  $body , $this->blocks , $this->macros );
 
     }
 

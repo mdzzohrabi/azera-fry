@@ -9,13 +9,18 @@
 namespace Azera\Fry;
 
 
-use Azera\Core\NativeFunction;
+use Azera\Fry\Core\NativeFunction;
 use Azera\Fry\Core\Filter;
 use Azera\Fry\Core\Operator;
 use Azera\Fry\Core\SimpleFunction;
 use Azera\Fry\Extension\Core;
 use Azera\Fry\Loader\LoaderInterface;
+use Azera\Fry\Parser\Section\SectionParserInterface;
 
+/**
+ * Class Environment
+ * @package Azera\Fry
+ */
 class Environment
 {
 
@@ -60,6 +65,11 @@ class Environment
     protected $filters = [];
 
     /**
+     * @var SectionParserInterface[]
+     */
+    protected $sectionParsers = [];
+
+    /**
      * @var object[]
      */
     protected $loadedTemplates;
@@ -89,6 +99,9 @@ class Environment
 
         foreach ( $extension->getUnaryOperators() as $operator )
             $this->unaryOperators[ $operator->getName() ] = $operator;
+
+        foreach ( $extension->getSectionParsers() as $sectionParser )
+            $this->sectionParsers[] = $sectionParser;
 
         return $this;
 
@@ -173,6 +186,11 @@ class Environment
         return $this->functions;
     }
 
+
+    /**
+     * @param $name
+     * @return NativeFunction|SimpleFunction|null
+     */
     public function getFunction( $name ) {
         return $this->functions[ $name ];
     }
@@ -209,6 +227,10 @@ class Environment
         return isset( $this->filters[ $name ] );
     }
 
+    /**
+     * @param string $template
+     * @return Template
+     */
     public function loadTemplate( $template ) {
 
         $class = $this->getTemplateClass( $template );
@@ -259,6 +281,14 @@ class Environment
      */
     public function hasUnaryOperator( $name ) {
         return isset($this->unaryOperators[ $name ]);
+    }
+
+    /**
+     * @return SectionParserInterface[]
+     */
+    public function getSectionParsers()
+    {
+        return $this->sectionParsers;
     }
 
 }

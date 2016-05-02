@@ -17,6 +17,11 @@ namespace Azera\Fry;
 class Compiler
 {
 
+    const SCOPE_ROOT = 0;
+    const SCOPE_ISOLATE = 1;
+    const SCOPE_BLOCK = 2;
+    const SCOPE_MACRO = 3;
+
     /**
      * @var string
      */
@@ -30,6 +35,11 @@ class Compiler
      * @var Environment
      */
     protected $environment;
+
+    /**
+     * @var array
+     */
+    protected $scopes = [];
 
     public function __construct( Environment $environment )
     {
@@ -125,6 +135,32 @@ class Compiler
     public function getEnvironment()
     {
         return $this->environment;
+    }
+
+    public function scopeIn( $scopeType = self::SCOPE_ISOLATE , $name = null ) {
+        $this->scopes[] = [ $scopeType , $name ];
+        return $this;
+    }
+
+    public function scopeOut() {
+        array_pop( $this->scopes );
+        return $this;
+    }
+
+    public function currentScope() {
+        return end( $this->scopes );
+    }
+
+    public function isRoot() {
+        return $this->currentScope()[0] == self::SCOPE_ROOT;
+    }
+
+    public function isBlock() {
+        return $this->currentScope()[0] == self::SCOPE_BLOCK;
+    }
+
+    public function scopeName() {
+        return $this->currentScope()[ 1 ];
     }
 
 }
