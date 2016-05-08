@@ -3,6 +3,10 @@ namespace Azera\Fry;
 
 use Azera\Core\Collection;
 
+/**
+ * Class Token
+ * @package Azera\Fry
+ */
 class Token {
 
 	/**

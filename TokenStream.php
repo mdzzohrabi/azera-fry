@@ -38,6 +38,9 @@ class TokenStream extends Stream
         $this->fileName = $fileName;
     }
 
+    /**
+     * @return bool
+     */
     public function isEOF()
     {
         return $this->items[ $this->offset ]->getType() == TokenTypes::T_EOF;
@@ -131,6 +134,17 @@ class TokenStream extends Stream
             return $this->items[ ++$this->offset ];
 
         return false;
+    }
+
+    public function skipIf( $tokenTypes , $values = null ) {
+
+        if ( $this->isEOF() ) return false;
+
+        if ( $this->items[ $this->offset ]->test( $tokenTypes , $values ) )
+            return $this;
+
+        return false;
+
     }
 
     /**

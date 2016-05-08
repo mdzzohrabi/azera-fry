@@ -238,14 +238,23 @@ class Environment
         if ( $this->loadedTemplates[ $class ] )
             return $this->loadedTemplates[ $class ];
 
-        if ( !file_exists( $this->temp_dir ) )
-            mkdir( $this->temp_dir , 0777 , true );
+        $code = $this->compileSource($this->loader->getSource($template), $template);
 
-        $code = $this->compileSource( $this->loader->getSource( $template ) , $template );
-        $tmpFile = $this->temp_dir . '/' . $this->loader->getCacheKey( $template ) . '.php';
-        file_put_contents( $tmpFile , $code );
+        if ( $this->temp_dir ) {
 
-        include_once $tmpFile;
+            if (!file_exists($this->temp_dir))
+                mkdir($this->temp_dir, 0777, true);
+
+            $tmpFile = $this->temp_dir . '/' . $this->loader->getCacheKey($template) . '.php';
+            file_put_contents($tmpFile, $code);
+
+            include_once $tmpFile;
+
+        } else {
+
+            eval( preg_replace( '/<\?php/A', '', $code ) );
+
+        }
 
         return new $class( $this );
 

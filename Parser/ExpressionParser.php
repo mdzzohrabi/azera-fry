@@ -458,7 +458,7 @@ class ExpressionParser
 
     }
 
-    protected function parsePostfix( Node $node ) {
+    protected function parsePostfix( Node $node = null ) {
 
         while ( true ) {
 

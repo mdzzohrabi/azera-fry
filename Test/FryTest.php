@@ -10,10 +10,12 @@ namespace Azera\Fry\Test;
 
 
 use Azera\Fry\Compiler;
+use Azera\Fry\Exception\SyntaxException;
 use Azera\Fry\Extension\Core;
 use Azera\Fry\Fry;
 use Azera\Fry\Lexer;
 use Azera\Fry\Loader\FileLoader;
+use Azera\Fry\Loader\StreamLoader;
 use Azera\Fry\Template;
 use Azera\Fry\Parser;
 use Azera\Fry\Reader;
@@ -98,6 +100,43 @@ class FryTest extends TestCase
         $template = $fry->loadTemplate( 'page.html.fry' );
 
         $this->assertEquals( 'No Title Page 1' , trim( $template->renderBlock( 'title' ) ) );
+
+        $this->assertContains( '<html>' , $output = $template->render([
+            'bodyClassName' => 'MyClass'
+        ]) );
+
+        $this->assertContains( '<body class="MyClass">' , $output );
+
+        $this->assertContains( '<content id="ABC">' , $output );
+
+    }
+    
+    public function testIfWithoutExpression() {
+        
+        $fry = new Fry( new StreamLoader() );
+
+        $this->assertEquals( '5' , trim( $fry->loadTemplate('@( 2 + 3 )')->render() ) );
+
+        $this->setExpectedException( SyntaxException::class );
+
+        $fry->loadTemplate('@if');
+        
+    }
+
+    public function testSandbox() {
+
+        $fry = new Fry( new StreamLoader() );
+
+        $template = $fry->loadTemplate('
+        @set username = "Alireza"
+        @sandbox {
+            @set username = "Mohammad"
+            @username,
+        }
+        @username
+        ');
+
+        $this->assertEquals( "Mohammad,Alireza" , preg_replace( '/\s+/' , '', $template->render() ) );
 
     }
 

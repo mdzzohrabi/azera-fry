@@ -8,26 +8,20 @@
 
 namespace Azera\Fry\Parser\Section;
 
-
 use Azera\Fry\Node;
 use Azera\Fry\Parser;
-use Azera\Fry\Parser\ParserInterface;
 use Azera\Fry\Token;
-use Azera\Fry\TokenStream;
 use Azera\Fry\TokenTypes;
 
-class MacroParser implements ParserInterface
+/**
+ * Class MacroParser
+ * @package Azera\Fry\Parser\Section
+ */
+class MacroParser extends AbstractSectionParser
 {
 
-    /**
-     * @param Token  $token
-     * @param Parser $parser
-     * @return bool
-     */
-    public function canParse(Token $token, Parser $parser)
-    {
-        return $token->test( TokenTypes::T_SECTION_TYPE , 'macro' );
-    }
+    const SECTION_START = 'macro';
+    const SECTION_END = 'endmacro';
 
     /**
      * @param Token  $token
@@ -37,9 +31,9 @@ class MacroParser implements ParserInterface
     public function parse(Token $token, Parser $parser)
     {
 
-        $stream = $parser->getStream();
+        parent::parse( $token , $parser );
 
-        $stream->expect( TokenTypes::T_SECTION_TYPE , 'macro' );
+        $stream = $parser->getStream();
 
         $name = $stream->expect( TokenTypes::T_NAME , null , 'Missing macro name' );
         $args = null;
@@ -48,12 +42,7 @@ class MacroParser implements ParserInterface
             $args = $parser->getExpressionParser()->parseArguments( false , true );
         }
 
-        $stream->expect( TokenTypes::T_SECTION_OPEN , '{' , 'Missing macro block open brace.' );
-
-        $body = $parser->subparse([ $this , 'decideMacroEnd' ]);
-
-
-        $stream->expect( TokenTypes::T_SECTION_CLOSE , '}' );
+        $body = $this->parseBody( $parser );
 
         $parser->setMacro(
             $name->getValue() ,
@@ -62,8 +51,35 @@ class MacroParser implements ParserInterface
 
     }
 
-    public function decideMacroEnd( TokenStream $stream ) {
-        return $stream->test( TokenTypes::T_SECTION_CLOSE , '}' );
+    /**
+     * @return string
+     */
+    public function getSectionName()
+    {
+        return self::SECTION_START;
     }
 
+    /**
+     * @return int
+     */
+    public function getStartTokenType()
+    {
+        return TokenTypes::T_SECTION_TYPE;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSectionEnd()
+    {
+        return self::SECTION_END;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function allowBrace()
+    {
+        return true;
+    }
 }

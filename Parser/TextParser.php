@@ -12,9 +12,12 @@ namespace Azera\Fry\Parser;
 use Azera\Fry\Node;
 use Azera\Fry\Parser;
 use Azera\Fry\Token;
-use Azera\Fry\TokenStream;
 use Azera\Fry\TokenTypes;
 
+/**
+ * Class TextParser
+ * @package Azera\Fry\Parser
+ */
 class TextParser implements ParserInterface
 {
 

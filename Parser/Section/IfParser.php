@@ -13,11 +13,14 @@ use Azera\Fry\Exception\SyntaxException;
 use Azera\Fry\Node;
 use Azera\Fry\Parser;
 use Azera\Fry\Parser\ParserInterface;
-use Azera\Fry\Stream;
 use Azera\Fry\Token;
 use Azera\Fry\TokenStream;
 use Azera\Fry\TokenTypes;
 
+/**
+ * Class IfParser
+ * @package Azera\Fry\Parser\Section
+ */
 class IfParser implements ParserInterface
 {
 
@@ -46,6 +49,11 @@ class IfParser implements ParserInterface
         $stream = $parser->getStream();
         $stream->expect( TokenTypes::T_SECTION_TYPE , 'if' );
         $expr = $parser->parseExpression();
+
+        if ( $expr == null ) {
+            throw new SyntaxException("If statement must have an expression, on line %d column %d", $token->getLine() , $token->getColumn() );
+        }
+
         $openToken = $stream->expect( TokenTypes::T_SECTION_OPEN );
 
         $body = $parser->subparse([ $this , $openToken->getValue() == '{' ? 'decideIfBraceEnd' : 'decideIfFork' ]);

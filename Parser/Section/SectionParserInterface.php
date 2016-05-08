@@ -27,4 +27,9 @@ interface SectionParserInterface extends ParserInterface
      */
     public function getSectionEnd();
 
+    /**
+     * @return boolean
+     */
+    public function allowBrace();
+
 }

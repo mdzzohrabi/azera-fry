@@ -10,9 +10,14 @@ namespace Azera\Fry\Extension\Core;
 
 use Azera\Fry\Node;
 use Azera\Fry\Parser;
+use Azera\Fry\Parser\Section\AbstractSectionParser;
 use Azera\Fry\Token;
 
-class SandboxParser extends Parser\Section\AbstractSectionParser
+/**
+ * Class SandboxParser
+ * @package Azera\Fry\Extension\Core
+ */
+class SandboxParser extends AbstractSectionParser
 {
 
     const SANDBOX = 'sandbox';
@@ -46,5 +51,13 @@ class SandboxParser extends Parser\Section\AbstractSectionParser
     public function getSectionEnd()
     {
         return self::END_SANDBOX;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function allowBrace()
+    {
+        return true;
     }
 }
